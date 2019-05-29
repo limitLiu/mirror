@@ -1,3 +1,19 @@
+## [v1.1.0](https://github.com/mirrorjs/mirror/compare/v0.2.13...v1.1.0)
+
+> 2019-05-06
+
+* Add [`toReducers`](docs/api.md#toreducers) and [`middleware`](docs/api.md#middleware).
+
+## ~~v1.0.0~~
+
+*Deprecated.*
+
+## [v0.2.13](https://github.com/mirrorjs/mirror/compare/v0.2.12...v0.2.13)
+
+> 2019-03-21
+
+* Fix `history` cjs style importing warning ([#106](https://github.com/mirrorjs/mirror/pull/106) by @kvkens).
+
 ## [v0.2.12](https://github.com/mirrorjs/mirror/compare/v0.2.11...v0.2.12)
 
 > 2018-09-08

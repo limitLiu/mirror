@@ -16,6 +16,8 @@
 * [connect](#connectmapstatetoprops-mapdispatchtoprops-mergeprops-options)
 * [render](#rendercomponent-container-callback)
 * [Router](#router)
+* [toReducers](#toreducers)
+* [middleware](#middleware)
 
 ### mirror.model({name, initialState, reducers, effects})
 
@@ -681,3 +683,82 @@ render(
 
 想了解更多 `Router` 相关的信息，你可以查看 Mirror 提供的 [simple-router 示例项目](https://github.com/mirrorjs/mirror/blob/master/examples/simple-router)，还有 [react-router 官方文档](https://github.com/ReactTraining/react-router/tree/master/packages/react-router)。
 
+### toReducers()
+> Since `1.1.0`
+
+一个方法，将当前所有通过 [`mirror.model`](#mirrormodelname-initialstate-reducers-effects) 定义的 "model" 转换为一个包含所有 reducer 的对象，该对象可直接用于 [`combineReducers`](http://redux.js.org/docs/api/combineReducers.html)。如果你不想使用 mirrorx 提供的 `render` 方法，不想由 mirrorx 完全控制你的 store，那么 `toReducers` 就派上用场了。
+
+例如：
+
+```js
+import { createStore, combineReducers } from 'redux'
+import mirror, { actions } from 'mirrorx'
+
+mirror.model({
+  initialState: 0,
+  name: 'count',
+  reducers: {
+    increment(state) {
+      return state + 1
+    },
+    decrement(state) {
+      return state - 1
+    },
+    add(state, data) {
+      return state + data
+    }
+  }
+})
+
+// `toReducers()` 会返回一个对象，对象的 key 是 model 的 name，value 是其对应的 reducer，
+// 再通过 `combineReducers` 将对象转换为一个标准 reducer
+const reducer = combineReducers(mirror.toReducers())
+
+// 创建 store
+const store = createStore(reducer)
+
+store.getState()
+// 0
+
+store.dispatch({ type: 'count/increment' })
+store.getState()
+// 1
+```
+
+但是，此时如果你想通过 `actions.count.increment()` 的方式来 dispatch action，将会抛错：
+
+```js
+// ...
+
+actions.count.increment()
+// Error: You are calling "dispatch" or "getState" without applying mirrorMiddleware! Please create your store with mirrorMiddleware first!
+```
+抛错的原因是创建 store 时没有使用 mirrorx 提供的 middleware，也就是说，必须使用 middleware，[`actions`](#actions) 才会生效，参看 [下文的详细解释](#middleware)。
+
+### middleware
+> Since `1.1.0`
+
+一个 Redux middleware，它是 [`actions`](#actions) 和 [`effects`](#-effects) 能够工作的原因。如果你同时想自己创建 store 和使用方便的 `actions`，那么**必须**要应用此 `middleware`（通过 `applyMiddleware`）：
+
+```js
+import { createStore, applyMiddleware, combineReducers } from 'redux'
+import mirror, { actions, middleware } from 'mirrorx'
+
+mirror.model({
+  initialState: 0,
+  name: 'count',
+  reducers: {
+    add(state, data) {
+      return state + data
+    }
+  }
+})
+
+const reducer = combineReducers(mirror.toReducers())
+
+// 应用 middleware
+const store = createStore(reducer, applyMiddleware(middleware))
+
+actions.count.add(10)
+store.getState()
+// 10
